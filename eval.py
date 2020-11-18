@@ -7,10 +7,12 @@ import cv2
 from tqdm import tqdm
 import torchvision.ops as ops
 from utils.utils import decode_output
-from datasets.plate_data_albu import Val_PlateDataset, detection_collate
+from datasets.ccpd import ChaLocDataLoader, detection_collate
 from datasets.data_augment import preproc
 from models.basemodel import BaseModel
 from config import cfg_plate
+import numpy as np
+
 # global index_toSave
 index_toSave = 0
 
@@ -119,12 +121,17 @@ def evaluate(val_data, model, threshold=0.5):
 
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    checkpoint_path = "weights/LP_detect/LP_detect_92.pth"
-    val_dataset = Val_PlateDataset(root_path=os.path.join('./data/val/images'),
-                                   file_name='label.txt')
-
-    valid_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False,
-                                               num_workers=4, collate_fn=detection_collate, pin_memory=True)
+    checkpoint_path = "weights/CCPD/CCPD_150.pth"
+    img_dir = [
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_weather",
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_blur",
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_tilt",
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_db",
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_fn",
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_rotate",
+        # "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_np",
+        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_challenge"
+    ]
     print("loading model")
     # Initialize model
     model = BaseModel(cfg=cfg_plate)
@@ -133,5 +140,16 @@ if __name__ == "__main__":
     del checkpoint
     model.eval()
     model.to(device)
-    recall, precision = evaluate(valid_loader, model)
-    print(recall, precision)
+    for i in np.linspace(0.5, 0.9, 8):
+        print("############################")
+        print("threshold: " + str(i))
+        for index, path in enumerate(img_dir):
+            print("**************************")
+            print(path)
+            val_dataset = ChaLocDataLoader([path], imgSize=320)
+
+            valid_loader = torch.utils.data.DataLoader(val_dataset, batch_size=256, shuffle=False,
+                                                       num_workers=6, collate_fn=detection_collate, pin_memory=True)
+
+            recall, precision = evaluate(valid_loader, model, threshold=i)
+            print(recall, precision)

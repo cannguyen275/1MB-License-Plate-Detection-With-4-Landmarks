@@ -47,9 +47,10 @@ class labelFpsDataLoader(Dataset):
             'bottom_right',
         ]
         label_box.append('plate')
+
         image_aug, bbs_aug, kps_aug = self.imgaug(img, bbs, kps, label_box, class_labels)
         # print(image_aug.shape)
-        debug = True
+        debug = False
         if debug:
             img_debug = image_aug.copy()
             img_debug = cv2.cvtColor(img_debug, cv2.COLOR_RGB2BGR)
@@ -99,12 +100,38 @@ class labelFpsDataLoader(Dataset):
         return torch.from_numpy(image_aug), target
 
 
+def detection_collate(batch):
+    """Custom collate fn for dealing with batches of images that have a different
+    number of associated object annotations (bounding boxes).
+
+    Arguments:
+        batch: (tuple) A tuple of tensor images and lists of annotations
+
+    Return:
+        A tuple containing:
+            1) (tensor) batch of images stacked on their 0 dim
+            2) (list of tensors) annotations for a given image are stacked on 0 dim
+    """
+    targets = []
+    imgs = []
+    for _, sample in enumerate(batch):
+        for _, tup in enumerate(sample):
+            if torch.is_tensor(tup):
+                imgs.append(tup)
+            elif isinstance(tup, type(np.empty(0))):
+                annos = torch.from_numpy(tup).float()
+                targets.append(annos)
+    return (torch.stack(imgs, 0), targets)
+
+
 class labelTestDataLoader(Dataset):
     def __init__(self, img_dir, imgSize, is_transform=None):
         self.img_dir = img_dir
         self.img_paths = []
-        for i in range(len(img_dir)):
-            self.img_paths += [el for el in paths.list_images(img_dir[i])]
+        # for i in range(len(img_dir)):
+        #     self.img_paths += [el for el in paths.list_images(img_dir[i])]
+        self.img_paths = os.listdir(img_dir)
+        self.img_paths = [os.path.join(img_dir, x) for x in self.img_paths]
         # self.img_paths = os.listdir(img_dir)
         # print self.img_paths
         self.img_size = imgSize
@@ -122,7 +149,8 @@ class labelTestDataLoader(Dataset):
         resizedImage = resizedImage.astype('float32')
         resizedImage /= 255.0
         lbl = img_name.split('/')[-1].split('.')[0].split('-')[-3]
-        return resizedImage, lbl, img_name
+        return torch.from_numpy(img)
+        # return resizedImage, lbl, img_name
 
 
 class ChaLocDataLoader(Dataset):
@@ -133,7 +161,7 @@ class ChaLocDataLoader(Dataset):
             self.img_paths += [el for el in paths.list_images(img_dir[i])]
         # self.img_paths = os.listdir(img_dir)
         # print self.img_paths
-        self.img_size = imgSize
+        self.long_side = imgSize
         self.is_transform = is_transform
 
     def __len__(self):
@@ -141,65 +169,41 @@ class ChaLocDataLoader(Dataset):
 
     def __getitem__(self, index):
         img_name = self.img_paths[index]
-        img = cv2.imread(img_name)
-        resizedImage = cv2.resize(img, self.img_size)
-        resizedImage = np.reshape(resizedImage, (resizedImage.shape[2], resizedImage.shape[0], resizedImage.shape[1]))
+        img_raw = cv2.imread(img_name)
+        target_size = self.long_side
+        im_shape = img_raw.shape
+        im_size_min = np.max(im_shape[0:2])
+        resize = float(target_size) / float(im_size_min)
+        img = cv2.resize(img_raw, None, None, fx=resize, fy=resize, interpolation=cv2.INTER_LINEAR)
+        im_height, im_width, _ = img.shape
 
         iname = img_name.rsplit('/', 1)[-1].rsplit('.', 1)[0].split('-')
-        [leftUp, rightDown] = [[int(eel) for eel in el.split('&')] for el in iname[2].split('_')]
+        [leftUp, rightDown] = [[int(int(eel) * resize) for eel in el.split('&')] for el in iname[2].split('_')]
+        # assert img.shape[0] == 1160
 
-        # tps = [[int(eel) for eel in el.split('&')] for el in iname[2].split('_')]
-        # for dot in tps:
-        #     cv2.circle(img, (int(dot[0]), int(dot[1])), 2, (0, 0, 255), 2)
-        # cv2.imwrite("/home/xubb/1_new.jpg", img)
+        annotations = np.zeros((0, 4))
+        annotation = np.zeros((1, 4))
+        # bbox
+        annotation[0, 0] = leftUp[0]  # x1
+        annotation[0, 1] = leftUp[1]  # y1
+        annotation[0, 2] = rightDown[0]  # x2
+        annotation[0, 3] = rightDown[1]  # y2
+        debug = False
+        if debug:
+            cv2.rectangle(img, (leftUp[0], leftUp[1]), (rightDown[0], rightDown[1]), (0, 0, 255), 2)
 
-        ori_w, ori_h = float(img.shape[1]), float(img.shape[0])
-        assert img.shape[0] == 1160
-        new_labels = [(leftUp[0] + rightDown[0]) / (2 * ori_w), (leftUp[1] + rightDown[1]) / (2 * ori_h),
-                      (rightDown[0] - leftUp[0]) / ori_w, (rightDown[1] - leftUp[1]) / ori_h]
-
-        resizedImage = resizedImage.astype('float32')
-        # Y = Y.astype('int8')
-        resizedImage /= 255.0
-        # lbl = img_name.split('.')[0].rsplit('-',1)[-1].split('_')[:-1]
-        # lbl = img_name.split('/')[-1].split('.')[0].rsplit('-',1)[-1]
-        # lbl = map(int, lbl)
-        # lbl2 = [[el] for el in lbl]
-
-        # resizedImage = torch.from_numpy(resizedImage).float()
-        return resizedImage, new_labels
-
-
-class demoTestDataLoader(Dataset):
-    def __init__(self, img_dir, imgSize, is_transform=None):
-        self.img_dir = img_dir
-        self.img_paths = []
-        for i in range(len(img_dir)):
-            self.img_paths += [el for el in paths.list_images(img_dir[i])]
-        # self.img_paths = os.listdir(img_dir)
-        # print self.img_paths
-        self.img_size = imgSize
-        self.is_transform = is_transform
-
-    def __len__(self):
-        return len(self.img_paths)
-
-    def __getitem__(self, index):
-        img_name = self.img_paths[index]
-        img = cv2.imread(img_name)
-        # img = img.astype('float32')
-        resizedImage = cv2.resize(img, self.img_size)
-        resizedImage = np.transpose(resizedImage, (2, 0, 1))
-        resizedImage = resizedImage.astype('float32')
-        resizedImage /= 255.0
-        return resizedImage, img_name
+            cv2.imshow("test", img)
+            cv2.waitKey()
+        annotations = np.append(annotations, annotation, axis=0)
+        return torch.from_numpy(img), annotations
 
 
 if __name__ == "__main__":
     from datasets.data_augment import preproc
 
-    dst = labelFpsDataLoader("/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_weather",
-                             preproc(512, (104, 117, 123)))
+    # dst = labelFpsDataLoader("/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_base",
+    #                          preproc(512, (104, 117, 123)))
+    dst = ChaLocDataLoader(["/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_weather"], imgSize=320)
     # print(len(dst))
     for index in range(0, len(dst)):
         dst.__getitem__(index)

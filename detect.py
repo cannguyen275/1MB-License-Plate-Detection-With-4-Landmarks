@@ -16,16 +16,17 @@ from utils.timer import Timer
 import torch.nn.functional as F
 
 parser = argparse.ArgumentParser(description='Test')
-parser.add_argument('-m', '--trained_model', default='weights/LP_detect/LP_detect_92.pth',
+parser.add_argument('-m', '--trained_model', default='weights/CCPD/CCPD_150.pth',
                     type=str, help='Trained state_dict file path to open')
-parser.add_argument('--image_path', default="/home/can/AI_Camera/FR_Occlusion/data_hoang/100images", type=str, help="Path to image folder")
+parser.add_argument('--image_path', default="/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_weather", type=str,
+                    help="Path to image folder")
 parser.add_argument('--origin_size', default=True, type=str, help='Whether use origin image size to evaluate')
 parser.add_argument('--long_side', default=640,
                     help='when origin_size is false, long_side is scaled size(320 or 640 for long side)')
 parser.add_argument('--save_folder', default='./widerface_evaluate/widerface_txt/', type=str,
                     help='Dir to save txt results')
 parser.add_argument('--cpu', action="store_true", default=False, help='Use cpu inference')
-parser.add_argument('--confidence_threshold', default=0.9, type=float, help='confidence_threshold')
+parser.add_argument('--confidence_threshold', default=0.7, type=float, help='confidence_threshold')
 parser.add_argument('--top_k', default=5000, type=int, help='top_k')
 parser.add_argument('--nms_threshold', default=0.4, type=float, help='nms_threshold')
 parser.add_argument('--keep_top_k', default=750, type=int, help='keep_top_k')
@@ -108,8 +109,10 @@ if __name__ == '__main__':
         _t['pre'].tic()
         # path = "/home/can/AI_Camera/License_Plate/LP_Detection/data/val/images/40000/61539302914508AF4442_B.jpg_out-full_1.jpg"
         img_raw = cv2.imread(path, cv2.IMREAD_COLOR)
-        img_raw = cv2.resize(img_raw, (850, 480))
+        h, w, _ = img_raw.shape
+        img_raw = cv2.resize(img_raw, (int(w / 3), int(h / 3)))
         # cv2.imshow("test111", img_raw)
+        # cv2.waitKey()
         img = np.float32(img_raw)
 
         # testing scale
@@ -207,4 +210,4 @@ if __name__ == '__main__':
             name = os.path.join('results', os.path.basename(path))
             cv2.imwrite(name, img_raw)
             # cv2.imshow("test", img_raw)
-            cv2.waitKey()
+            # cv2.waitKey()

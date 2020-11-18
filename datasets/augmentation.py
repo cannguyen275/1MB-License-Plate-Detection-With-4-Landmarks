@@ -20,8 +20,8 @@ class ImgAugTransform:
             # iaa.Sometimes(0.25, iaa.GammaContrast(gamma=(0, 1.75))),
             # iaa.Sometimes(0.25, iaa.GaussianBlur(sigma=(0, 1.3))),
             # iaa.Sometimes(0.25, iaa.pillike.Autocontrast(cutoff=(0, 15.0))),
-            iaa.Grayscale(alpha=(0.0, 1.0)),
-            iaa.Sometimes(0.15, iaa.MotionBlur(k=5, angle=[-45, 45])),
+            # iaa.Grayscale(alpha=(0.0, 1.0)),
+            # iaa.Sometimes(0.15, iaa.MotionBlur(k=5, angle=[-45, 45])),
             iaa.Sometimes(0.35,
                           iaa.OneOf([iaa.MultiplyAndAddToBrightness(mul=(0.5, 1.5), add=(-30, 30)),
                                      iaa.GammaContrast(gamma=(0, 1.75)),
@@ -29,19 +29,19 @@ class ImgAugTransform:
                                      iaa.Sometimes(0.25, iaa.GaussianBlur(sigma=(0, 1.3)))
                                      ])),
             # iaa.Fliplr(0.5),
-            iaa.Sometimes(0.35,
-                          iaa.OneOf([iaa.Dropout(p=(0, 0.1)),
-                                     iaa.Dropout2d(p=0.5),
-                                     iaa.CoarseDropout(0.1, size_percent=0.5),
-                                     iaa.SaltAndPepper(0.1),
-                                     ])),
-            iaa.Sometimes(0.15,
-                          iaa.OneOf([
-                              iaa.Clouds(),
-                              iaa.Fog(),
-                              iaa.Snowflakes(flake_size=(0.1, 0.4), speed=(0.01, 0.05)),
-                              iaa.Rain(speed=(0.1, 0.3))
-                          ])),
+            # iaa.Sometimes(0.35,
+            #               iaa.OneOf([iaa.Dropout(p=(0, 0.1)),
+            #                          iaa.Dropout2d(p=0.5),
+            #                          iaa.CoarseDropout(0.1, size_percent=0.5),
+            #                          iaa.SaltAndPepper(0.1),
+            #                          ])),
+            # iaa.Sometimes(0.15,
+            #               iaa.OneOf([
+            #                   iaa.Clouds(),
+            #                   iaa.Fog(),
+            #                   iaa.Snowflakes(flake_size=(0.1, 0.4), speed=(0.01, 0.05)),
+            #                   iaa.Rain(speed=(0.1, 0.3))
+            #               ])),
             # iaa.Sometimes(0.5, iaa.MultiplyAndAddToBrightness(mul=(0.5, 1.5), add=(-30, 30)))
         ])
 
@@ -69,12 +69,12 @@ class ImgAugment_Albumentations(object):
 
                 # A.RandomResizedCrop(height, width),
                 A.Rotate(limit=60, p=0.3),
-                A.IAAAffine(p=0.3),
-                A.IAAPerspective(p=0.5),
-                A.OneOf([
-                    A.IAAAdditiveGaussianNoise(p=0.5),
-                    A.GaussNoise(p=0.6),
-                ]),
+                # A.IAAAffine(p=0.3),
+                # A.IAAPerspective(p=0.5),
+                # A.OneOf([
+                #     A.IAAAdditiveGaussianNoise(p=0.5),
+                #     A.GaussNoise(p=0.6),
+                # ]),
                 A.Resize(height, width)
             ],
             bbox_params=A.BboxParams(format='pascal_voc', min_area=256, min_visibility=0.5,

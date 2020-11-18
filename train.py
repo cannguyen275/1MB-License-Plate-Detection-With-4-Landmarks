@@ -18,16 +18,16 @@ import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
 from torch.utils.tensorboard import SummaryWriter
-from datasets import PlateDataset, detection_collate, preproc
+from datasets import labelFpsDataLoader, detection_collate, preproc
 from utils.utils import init_log, AverageMeter, draw_output, get_state_dict
 from layers.modules import MultiBoxLoss
 from layers.functions.prior_box import PriorBox
 from models.basemodel import BaseModel
 from config import cfg_plate
-from eval import evaluate
+# from eval import evaluate
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('--network', default='LP_detect', type=str,
+parser.add_argument('--network', default='CCPD', type=str,
                     help='nothing')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
@@ -36,14 +36,14 @@ parser.add_argument('--epochs', default=200, type=int, metavar='N',
 parser.add_argument('-b', '--batch_size', default=64, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total batch size of all GPUs on the current node when using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning_rate', default=0.0001, type=float,
+parser.add_argument('--lr', '--learning_rate', default=0.00001, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
 parser.add_argument('--wd', '--weight_decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('--resume', default="./weights/LP_detect/LP_detect_48.pth", type=str,
+parser.add_argument('--resume', default="weights/CCPD/CCPD_109.pth", type=str,
                     help='Checkpoint state_dict file to resume training from')
 parser.add_argument('--num_classes', default=2, type=int,
                     help='Number of class used in model')
@@ -133,15 +133,14 @@ def main_worker(args):
     os.makedirs(save_dir)
     logger = init_log(save_dir)
 
-    train_dataset = PlateDataset(root_path=os.path.join('./data/train/images'),
-                                 file_name='label.txt',
-                                 preproc=preproc(cfg_plate['image_size'], (104, 117, 123)))
-    valid_dataset = ValDataset(os.path.join("./data/widerface/val", "data/train/label.txt"))
+    train_dataset = labelFpsDataLoader("/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_base",
+                                       preproc=preproc(cfg_plate['image_size'], (104, 117, 123)))
+    # valid_dataset = ValDataset(os.path.join("./data/widerface/val", "data/train/label.txt"))
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                                                num_workers=args.workers, collate_fn=detection_collate, pin_memory=True)
-    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False,
-                                               num_workers=args.workers, collate_fn=detection_collate, pin_memory=True)
+    # valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False,
+    #                                            num_workers=args.workers, collate_fn=detection_collate, pin_memory=True)
 
     # Initialize model
     model = BaseModel(cfg=cfg_plate)
@@ -190,18 +189,18 @@ def main_worker(args):
     for epoch in range(args.start_epoch, args.epochs):
         train_loss = train(train_loader, model, priors, criterion, optimizer, scheduler, epoch, logger, args)
 
-        if epoch % args.eval_freq == 0:
-            recall, precision = evaluate(valid_loader, model)
-
-        logger.info('Recall: {:.4f} \t'
-                    'Prcision: {:.3f} \t'.format(recall, precision))
+        # if epoch % args.eval_freq == 0:
+        #     recall, precision = evaluate(valid_loader, model)
+        #
+        # logger.info('Recall: {:.4f} \t'
+        #             'Prcision: {:.3f} \t'.format(recall, precision))
 
         # Log to Tensorboard
         lr = optimizer.param_groups[0]['lr']
         writer.add_scalar('model/train_loss', train_loss, epoch)
         writer.add_scalar('model/learning_rate', lr, epoch)
-        writer.add_scalar('model/precision', precision, epoch)
-        writer.add_scalar('model/recall', recall, epoch)
+        # writer.add_scalar('model/precision', precision, epoch)
+        # writer.add_scalar('model/recall', recall, epoch)
 
         # scheduler.step()
         scheduler.step(train_loss)

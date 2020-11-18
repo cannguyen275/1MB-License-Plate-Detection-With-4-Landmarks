@@ -45,7 +45,7 @@ def init_log(output_dir):
 
 
 def decode_output(image, detection_boxes, detection_scores, detection_landmark, cfg_plate):
-    # print(image.shape)
+    # print(image.shape[2:])
     image_h, image_w = image.shape[2:]
     # image_h, image_w, _ = image.shape
     # cfg_plate['image_size'] = (480, 640)
