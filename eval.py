@@ -123,14 +123,13 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     checkpoint_path = "weights/CCPD/CCPD_150.pth"
     img_dir = [
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_weather",
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_blur",
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_tilt",
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_db",
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_fn",
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_rotate",
-        # "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_np",
-        "/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_challenge"
+        "CCPD2019/ccpd_weather",
+        "CCPD2019/ccpd_blur",
+        "CCPD2019/ccpd_tilt",
+        "CCPD2019/ccpd_db",
+        "CCPD2019/ccpd_fn",
+        "hCCPD2019/ccpd_rotate",
+        "CCPD2019/ccpd_challenge"
     ]
     print("loading model")
     # Initialize model
