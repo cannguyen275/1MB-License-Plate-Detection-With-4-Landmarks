@@ -16,7 +16,7 @@ from utils.timer import Timer
 import torch.nn.functional as F
 
 parser = argparse.ArgumentParser(description='Test')
-parser.add_argument('-m', '--trained_model', default='weights/CCPD_150.pth',
+parser.add_argument('-m', '--trained_model', default='weights/CCPD/CCPD_150.pth',
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--image_path', default="CCPD2019/ccpd_weather", type=str,
                     help="Path to image folder")
