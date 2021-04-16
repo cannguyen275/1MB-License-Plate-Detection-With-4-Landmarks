@@ -16,9 +16,9 @@ from utils.timer import Timer
 import torch.nn.functional as F
 
 parser = argparse.ArgumentParser(description='Test')
-parser.add_argument('-m', '--trained_model', default='weights/CCPD/CCPD_150.pth',
+parser.add_argument('-m', '--trained_model', default='weights/CCPD_150.pth',
                     type=str, help='Trained state_dict file path to open')
-parser.add_argument('--image_path', default="/home/can/AI_Camera/Dataset/License_Plate/CCPD2019/ccpd_weather", type=str,
+parser.add_argument('--image_path', default="CCPD2019/ccpd_weather", type=str,
                     help="Path to image folder")
 parser.add_argument('--origin_size', default=True, type=str, help='Whether use origin image size to evaluate')
 parser.add_argument('--long_side', default=640,
@@ -107,7 +107,6 @@ if __name__ == '__main__':
     # testing begin
     for path in image_paths:
         _t['pre'].tic()
-        # path = "/home/can/AI_Camera/License_Plate/LP_Detection/data/val/images/40000/61539302914508AF4442_B.jpg_out-full_1.jpg"
         img_raw = cv2.imread(path, cv2.IMREAD_COLOR)
         h, w, _ = img_raw.shape
         img_raw = cv2.resize(img_raw, (int(w / 3), int(h / 3)))
